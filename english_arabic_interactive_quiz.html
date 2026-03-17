@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English ↔ Arabic Quiz</title>
+  <style>
+    :root {
+      --bg1:#f8fbff; --bg2:#fff6fb; --card:#ffffff; --text:#1f2937; --muted:#6b7280;
+      --accent:#7c3aed; --accent2:#ec4899; --ok:#16a34a; --bad:#dc2626; --soft:#eef2ff;
+      --border:#e5e7eb;
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; font-family: Arial, "Noto Sans Arabic", "Segoe UI", sans-serif;
+      color:var(--text);
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height:100vh;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 18px; }
+    .hero {
+      background: rgba(255,255,255,.9);
+      backdrop-filter: blur(8px);
+      border:1px solid rgba(255,255,255,.6);
+      box-shadow: 0 10px 30px rgba(0,0,0,.06);
+      border-radius: 28px; padding: 22px; margin-bottom: 16px;
+    }
+    h1 { margin:0 0 8px; font-size: clamp(1.5rem, 3vw, 2.3rem); }
+    .sub { color:var(--muted); line-height:1.7; }
+    .grid { display:grid; grid-template-columns: 1.1fr .9fr; gap:16px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+    .panel {
+      background:var(--card); border:1px solid var(--border); border-radius:26px; padding:18px;
+      box-shadow:0 8px 22px rgba(0,0,0,.05);
+    }
+    .controls { display:grid; gap:12px; }
+    .label { font-weight:700; margin-bottom:8px; display:block; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; }
+    .btn, .chip {
+      border:none; border-radius:16px; padding:12px 16px; font-size:1rem; cursor:pointer;
+      transition:.18s transform,.18s box-shadow,.18s background;
+    }
+    .btn { background:linear-gradient(135deg, var(--accent), var(--accent2)); color:white; font-weight:700; box-shadow:0 8px 20px rgba(124,58,237,.23); }
+    .btn:hover { transform:translateY(-1px); }
+    .btn.secondary { background:#f3f4f6; color:var(--text); box-shadow:none; }
+    .btn.ghost { background:#fff; color:var(--text); border:1px solid var(--border); box-shadow:none; }
+    .chip { background:#f8fafc; color:#111827; border:1px solid var(--border); }
+    .chip.active { background:var(--soft); border-color:#c7d2fe; color:#312e81; font-weight:700; }
+    select { width:100%; padding:12px 14px; border-radius:14px; border:1px solid var(--border); font-size:1rem; background:white; }
+    .stats { display:grid; grid-template-columns: repeat(4,1fr); gap:10px; margin-top:14px; }
+    .stat { background:#fafafa; border:1px solid var(--border); border-radius:20px; padding:14px; text-align:center; }
+    .stat b { display:block; font-size:1.25rem; margin-bottom:4px; }
+    @media (max-width:700px) { .stats { grid-template-columns: repeat(2,1fr); } }
+    .quiz-card { min-height: 480px; display:flex; flex-direction:column; gap:14px; }
+    .topline { display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap; }
+    .badge { background:#f3f4f6; border:1px solid var(--border); border-radius:999px; padding:8px 12px; color:#374151; font-size:.95rem; }
+    .progress { width:100%; height:12px; background:#eef2f7; border-radius:999px; overflow:hidden; }
+    .bar { height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .25s ease; }
+    .question {
+      background:linear-gradient(135deg,#f9fafb,#ffffff);
+      border:1px solid var(--border); border-radius:24px; padding:24px; text-align:center;
+    }
+    .prompt-label { color:var(--muted); font-size:.98rem; margin-bottom:10px; }
+    .word { font-size: clamp(1.7rem, 4vw, 2.9rem); font-weight:800; line-height:1.35; word-break:break-word; }
+    .options { display:grid; gap:12px; }
+    .option {
+      width:100%; text-align:right; background:white; border:2px solid var(--border); padding:14px 16px;
+      border-radius:18px; font-size:1.08rem; cursor:pointer; transition:.18s;
+    }
+    .option:hover:not([disabled]) { transform:translateY(-1px); box-shadow:0 8px 18px rgba(0,0,0,.05); }
+    .option.correct { border-color:#86efac; background:#f0fdf4; }
+    .option.wrong { border-color:#fca5a5; background:#fef2f2; }
+    .feedback { min-height:30px; font-weight:700; text-align:center; }
+    .feedback.ok { color:var(--ok); }
+    .feedback.bad { color:var(--bad); }
+    .tiny { color:var(--muted); font-size:.92rem; }
+    .footer-actions { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+    .hidden { display:none !important; }
+    .results { text-align:center; padding:24px 10px; }
+    .results h2 { margin:0 0 8px; font-size:2rem; }
+    .search-box input { width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:14px; font-size:1rem; }
+    table { width:100%; border-collapse:collapse; margin-top:12px; font-size:.96rem; }
+    th, td { border-bottom:1px solid var(--border); padding:10px 8px; text-align:right; }
+    thead th { background:#fafafa; position:sticky; top:0; }
+    .table-wrap { max-height:340px; overflow:auto; border:1px solid var(--border); border-radius:18px; }
+    .muted-box { background:#fafafa; border:1px dashed var(--border); border-radius:18px; padding:12px; color:var(--muted); line-height:1.7; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>اختبار تفاعلي: English ↔ Arabic</h1>
+      <div class="sub">كل الكلمات موجودة بالاتجاهين: من الإنجليزي للعربي، ومن العربي للإنجليزي. يمكنك التدريب على الجميع، أو اختيار اتجاه واحد فقط. الملف جاهز لـ GitHub Pages.</div>
+    </section>
+
+    <div class="grid">
+      <section class="panel controls">
+        <div>
+          <span class="label">اتجاه الاختبار</span>
+          <div class="row" id="directionChips">
+            <button class="chip active" data-direction="both">الاثنان معًا</button>
+            <button class="chip" data-direction="en-ar">English → Arabic</button>
+            <button class="chip" data-direction="ar-en">Arabic → English</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="label" for="questionCount">عدد الأسئلة</label>
+          <select id="questionCount">
+            <option value="20">20</option>
+            <option value="40" selected>40</option>
+            <option value="80">80</option>
+            <option value="120">120</option>
+            <option value="9999">كل الكلمات</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="label" for="optionCount">عدد الخيارات لكل سؤال</label>
+          <select id="optionCount">
+            <option value="4" selected>4</option>
+            <option value="3">3</option>
+            <option value="2">2</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <button class="btn" id="startBtn">ابدأ الاختبار</button>
+          <button class="btn secondary" id="shuffleBtn">بدّل ترتيب بنك الكلمات</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><b id="totalPairs">0</b><span>أزواج الكلمات</span></div>
+          <div class="stat"><b id="totalCards">0</b><span>إجمالي البطاقات</span></div>
+          <div class="stat"><b id="scoreStat">0</b><span>إجابات صحيحة</span></div>
+          <div class="stat"><b id="accuracyStat">0%</b><span>الدقة</span></div>
+        </div>
+
+        <div class="muted-box">ملاحظة: في وضع <b>الاثنان معًا</b> ستظهر لك بعض الكلمات من الإنجليزي إلى العربي، وبعدها كلمات بالعكس أيضًا، حتى تتدرب على كل المفردات بالاتجاهين.</div>
+
+        <div>
+          <span class="label">بنك الكلمات</span>
+          <div class="search-box"><input id="searchInput" type="text" placeholder="ابحثي عن كلمة إنجليزية أو عربية..." /></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>English</th><th>العربية</th></tr></thead>
+              <tbody id="wordTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel quiz-card">
+        <div id="quizAreaStart">
+          <div class="question">
+            <div class="prompt-label">جاهزة؟</div>
+            <div class="word">اضغطي "ابدأ الاختبار"</div>
+            <p class="tiny">سيتم خلط الأسئلة والخيارات تلقائيًا.</p>
+          </div>
+        </div>
+
+        <div id="quizArea" class="hidden">
+          <div class="topline">
+            <div class="badge" id="statusBadge">سؤال 1 / 40</div>
+            <div class="badge" id="modeBadge">English → Arabic</div>
+          </div>
+          <div class="progress"><div class="bar" id="progressBar"></div></div>
+
+          <div class="question">
+            <div class="prompt-label" id="promptLabel">اختاري الترجمة الصحيحة</div>
+            <div class="word" id="questionWord">word</div>
+          </div>
+
+          <div class="options" id="optionsBox"></div>
+          <div class="feedback" id="feedback"></div>
+
+          <div class="footer-actions">
+            <button class="btn secondary" id="nextBtn" disabled>السؤال التالي</button>
+            <button class="btn ghost" id="restartBtn">إعادة البدء</button>
+          </div>
+        </div>
+
+        <div id="resultsArea" class="results hidden">
+          <h2>انتهى الاختبار 🎉</h2>
+          <p id="finalScoreText"></p>
+          <div class="footer-actions">
+            <button class="btn" id="playAgainBtn">إعادة الاختبار</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+const WORD_PAIRS = [{"english": "calculation", "arabic": "حساب"}, {"english": "suiciding", "arabic": "انتحار"}, {"english": "termination", "arabic": "نهاية"}, {"english": "plundering", "arabic": "ينهب"}, {"english": "extinction", "arabic": "انقراض"}, {"english": "lubricating", "arabic": "تشحيم"}, {"english": "restriction", "arabic": "تقييد"}, {"english": "unmarred by", "arabic": "غير ملموس"}, {"english": "reverent", "arabic": "موقّر / مبجّل"}, {"english": "indifferent of", "arabic": "غير مبالٍ"}, {"english": "primary", "arabic": "أسا"}, {"english": "unworthy of", "arabic": "غير جدير بشيء"}, {"english": "sufficient", "arabic": "كافٍ"}, {"english": "unstained from", "arabic": "غير ملوّث من"}, {"english": "elegant", "arabic": "أنيق"}, {"english": "prohibitive", "arabic": "سعره مرتفع"}, {"english": "promoted", "arabic": "روّج / رقّى"}, {"english": "caliphates", "arabic": "الخلافة"}, {"english": "attributed", "arabic": "نسب"}, {"english": "foray", "arabic": "غزوة"}, {"english": "charged", "arabic": "خالف / إتّهم"}, {"english": "concurred", "arabic": "وافق"}, {"english": "strangled", "arabic": "خنق"}, {"english": "rescued", "arabic": "انقذ"}, {"english": "rather", "arabic": "بدلً"}, {"english": "drafted", "arabic": "صاغ"}, {"english": "although", "arabic": "على الرغم"}, {"english": "suffered", "arabic": "عا"}, {"english": "seldom", "arabic": "نادرًا"}, {"english": "weaver", "arabic": "حائك"}, {"english": "nearly", "arabic": "تقريبًا"}, {"english": "sculptor", "arabic": "نحات"}, {"english": "invaded", "arabic": "غزى"}, {"english": "advisor", "arabic": "مستشار"}, {"english": "derived", "arabic": "مُشتق"}, {"english": "streamer", "arabic": "غاسل/ انبوب"}, {"english": "acknowledged", "arabic": "اعترف / عرف"}, {"english": "shameful", "arabic": "مخزٍ / مُخجل"}, {"english": "pervaded", "arabic": "انت"}, {"english": "unrecognized", "arabic": "غير معترف به"}, {"english": "frequently", "arabic": "بشكل متكرّر"}, {"english": "forgiving", "arabic": "متسامح"}, {"english": "similarly", "arabic": "بشكل متشابه"}, {"english": "knowledgeable", "arabic": "واسع المعرفة"}, {"english": "gradually", "arabic": "تدريجيًا"}, {"english": "enjoy", "arabic": "يستمتع"}, {"english": "equally", "arabic": "بتساوي"}, {"english": "refrain", "arabic": "يمتنع"}, {"english": "intimidating", "arabic": "مرعب / مخيف"}, {"english": "argue", "arabic": "يجادل"}, {"english": "insist", "arabic": "ي"}, {"english": "suppress", "arabic": "يكبح"}, {"english": "strave", "arabic": "يجوع"}, {"english": "convert", "arabic": "يحوّل"}, {"english": "tender", "arabic": "مناقصة / عطاء"}, {"english": "suspect", "arabic": "يشكّ"}, {"english": "scenic", "arabic": "تصوري / خلاّب"}, {"english": "hesitant", "arabic": "متردّد"}, {"english": "immediate", "arabic": "فوري"}, {"english": "devoted", "arabic": "مُكرّس"}, {"english": "noble", "arabic": "نبيل"}, {"english": "responsive", "arabic": "متجاوب"}, {"english": "chunks", "arabic": "قطع"}, {"english": "serial", "arabic": "متسلسل"}, {"english": "transitions", "arabic": "انتقالت"}, {"english": "devastate", "arabic": "يحطّم"}, {"english": "gestures", "arabic": "ايماءات"}, {"english": "deceive", "arabic": "يخدع"}, {"english": "disciplines", "arabic": "يضبط / تخصصات"}, {"english": "constitute", "arabic": "يشكّل"}, {"english": "verse", "arabic": "بيت شعر"}, {"english": "deposit", "arabic": "يودع"}, {"english": "swamp", "arabic": "مستنقع"}, {"english": "exported", "arabic": "مستورد"}, {"english": "rhythm", "arabic": "إيقاع"}, {"english": "exiled", "arabic": "منفي"}, {"english": "district", "arabic": "مقاطعة"}, {"english": "donated", "arabic": "تبرع"}, {"english": "engage in", "arabic": "ينخرط بِـ"}, {"english": "descended", "arabic": "ينحدر من"}, {"english": "glimpse at", "arabic": "يلمح شيء"}, {"english": "halted", "arabic": "أوقَف"}, {"english": "recognize with", "arabic": "يتعرف ع"}, {"english": "defined", "arabic": "عرّف"}, {"english": "recruit for", "arabic": "تجنيد لـ"}, {"english": "depicted", "arabic": "وصف"}, {"english": "scorching", "arabic": "حارق"}, {"english": "contaminate", "arabic": "لوّث"}, {"english": "slandered", "arabic": "يُقذف"}, {"english": "aggregate", "arabic": "مجموع"}, {"english": "colloquial", "arabic": "عاميّة"}, {"english": "commemorate", "arabic": "إحياء ذكرى"}, {"english": "volumes", "arabic": "مجلدات"}, {"english": "congregate", "arabic": "تجمع"}, {"english": "treasures", "arabic": "كنوز"}, {"english": "oblivion", "arabic": "نسيان"}, {"english": "compartments", "arabic": "مقصورات"}, {"english": "countercurrent", "arabic": "عكس التيار"}, {"english": "horizonz", "arabic": "آفاق"}, {"english": "similarly", "arabic": "بصورة متماثلة"}, {"english": "educational", "arabic": "تعليمي"}, {"english": "proximity", "arabic": "قرب"}, {"english": "practical", "arabic": "عم"}, {"english": "reprimand", "arabic": "توبيخ"}, {"english": "additional", "arabic": "إضا"}, {"english": "assets", "arabic": "ممتلكات"}, {"english": "nonetheless", "arabic": "ومع ذلك"}, {"english": "concrete", "arabic": "ملموس"}, {"english": "henceforth", "arabic": "من الآن فصاعدًا"}, {"english": "intangible", "arabic": "غير محسوس"}, {"english": "meanwhile", "arabic": "في غضون ذلك"}, {"english": "irreconcilable", "arabic": "عنيد"}, {"english": "otherwise", "arabic": "عكس ذلك"}, {"english": "fleeting", "arabic": "عابر / سريع"}, {"english": "preserved", "arabic": "حافظ"}, {"english": "irritating", "arabic": "مزعج"}, {"english": "faded", "arabic": "ت"}, {"english": "patent", "arabic": "براءة اختراع"}, {"english": "abandoned", "arabic": "هجر"}, {"english": "abundant", "arabic": "وف"}, {"english": "secured", "arabic": "آمن / مستقر"}, {"english": "ushering", "arabic": "تستهل"}, {"english": "delegate", "arabic": "مندوب"}, {"english": "prosperity", "arabic": "ازدهار"}, {"english": "indulge", "arabic": "تساهل"}, {"english": "recurring", "arabic": "متكرر"}, {"english": "embellish", "arabic": "زخرف / زيّن"}, {"english": "hue", "arabic": "ألوان"}, {"english": "maneuver", "arabic": "مناورة"}, {"english": "absorb", "arabic": "يمتص"}, {"english": "formulated", "arabic": "صاغ"}, {"english": "compare", "arabic": "يقارن"}, {"english": "insert", "arabic": "أدخل"}, {"english": "approve", "arabic": "يوافق"}, {"english": "evaluated", "arabic": "قدّر"}, {"english": "fragile", "arabic": "هش"}, {"english": "dominated", "arabic": "سيطر"}, {"english": "hectic", "arabic": "عصبي"}, {"english": "baffle", "arabic": "أربك / حيرّ"}, {"english": "alert", "arabic": "ينبه"}, {"english": "denote", "arabic": "دّل / رمز"}, {"english": "sober", "arabic": "صاحي"}, {"english": "assault", "arabic": "أهان"}, {"english": "reputation", "arabic": "سمعة"}, {"english": "assortment", "arabic": "تشكيلة"}, {"english": "regulation", "arabic": "تنظيم"}, {"english": "excursion", "arabic": "نزهة"}, {"english": "restoration", "arabic": "ترميم"}, {"english": "inaccessible", "arabic": "يتعذر الوصول إليها"}, {"english": "resignation", "arabic": "استقالة"}, {"english": "superfluous", "arabic": "زائد عن الحاجة"}, {"english": "sustenance", "arabic": "إعالة / رزق"}, {"english": "coherent", "arabic": "متماسك"}, {"english": "revenue", "arabic": "عائدات"}, {"english": "diminished", "arabic": "قلل"}, {"english": "diversity", "arabic": "تنوع"}, {"english": "roasts", "arabic": "حمّص"}, {"english": "altitude", "arabic": "ارتفاع"}, {"english": "gratitude", "arabic": "شكر"}, {"english": "illustration", "arabic": "رسم توضيحي"}, {"english": "yields", "arabic": "ينتج"}, {"english": "protest", "arabic": "احتج"}, {"english": "stack", "arabic": "كدس / كوّم"}, {"english": "disguise", "arabic": "يموه"}, {"english": "infatuation", "arabic": "إعجاب شديد"}, {"english": "instituted", "arabic": "مؤسس"}, {"english": "alignment", "arabic": "انتظام"}, {"english": "encountered", "arabic": "واجه"}, {"english": "disillusionment", "arabic": "خيبة أمل"}, {"english": "persuaded", "arabic": "اقنع"}, {"english": "exposed", "arabic": "كشف"}, {"english": "consulted", "arabic": "أهان"}, {"english": "exceeded", "arabic": "تجاوز"}, {"english": "applaud", "arabic": "صفق"}, {"english": "enhanced", "arabic": "حسّن"}, {"english": "confer", "arabic": "تشاور"}, {"english": "endorsed", "arabic": "صادق ع"}, {"english": "distract", "arabic": "شتت الانتباه"}, {"english": "enrage", "arabic": "غضب شديد"}, {"english": "retrieve", "arabic": "استعاد"}, {"english": "invoke", "arabic": "توسل"}, {"english": "hired", "arabic": "وظف"}, {"english": "propel", "arabic": "دفع"}, {"english": "served", "arabic": "خدم"}, {"english": "indispensable", "arabic": "لا غنى عنه"}, {"english": "trait", "arabic": "ميزة"}, {"english": "convey", "arabic": "نقل"}, {"english": "ruled", "arabic": "حكّم"}, {"english": "verge of extinction", "arabic": "حافة الانقراض"}, {"english": "subsequent", "arabic": "تالٍ"}, {"english": "expansion", "arabic": "توسع"}, {"english": "intermittent", "arabic": "متقطع / بالتناوب"}, {"english": "thrived", "arabic": "ازدهار"}, {"english": "misquoted", "arabic": "اساء الاقتباس"}, {"english": "reform", "arabic": "اصلاح"}, {"english": "unprecedented", "arabic": "غير مسبوق"}, {"english": "ooze", "arabic": "افرز"}, {"english": "limp", "arabic": "طرف"}, {"english": "calamities", "arabic": "أحداث"}, {"english": "willingly", "arabic": "بشكل إرادي"}, {"english": "merge", "arabic": "دمج"}, {"english": "unspoilt", "arabic": "غير ملوث"}, {"english": "merits", "arabic": "مزايا"}, {"english": "surged", "arabic": "ارتفع بسكل حاد"}, {"english": "doctrines", "arabic": "مذاهب"}, {"english": "exploitable", "arabic": "قابل للاستغلال"}, {"english": "erroneously", "arabic": "بشكل خاطئ"}, {"english": "thrift", "arabic": "توف"}, {"english": "durable", "arabic": "مت"}, {"english": "search", "arabic": "بحث"}, {"english": "contemporary", "arabic": "بنفس الزمن / معا"}, {"english": "struggle", "arabic": "معاناة / تكبّد"}, {"english": "remperamental", "arabic": "مزاجي"}, {"english": "parody", "arabic": "محاكاة ساخرة"}, {"english": "combustion", "arabic": "الاحتراق"}, {"english": "blurry", "arabic": "ضبابيّ (مغبّش"}, {"english": "commision", "arabic": "عمولة / لجنة"}, {"english": "fatal", "arabic": "قاتل"}, {"english": "complacency", "arabic": "الرضا عن النفس"}, {"english": "dizzy", "arabic": "دائخ"}, {"english": "commodity", "arabic": "سلعة"}, {"english": "hushed", "arabic": "صمت"}, {"english": "pseudonym", "arabic": "اسم مستعار"}, {"english": "quantities", "arabic": "كميات"}, {"english": "overshadowed", "arabic": "مُظلل"}, {"english": "extremities", "arabic": "أطراف"}, {"english": "intellectual", "arabic": "فكري / مثقف"}, {"english": "diversities", "arabic": "تنوّعات"}, {"english": "anticipated", "arabic": "شهد"}, {"english": "spectrums", "arabic": "أطياف"}, {"english": "copying", "arabic": "ينسخ / يقلّد"}, {"english": "judgment", "arabic": "حكم"}, {"english": "understanding", "arabic": "يتّفهم / تفاهم"}, {"english": "virtue", "arabic": "فضيلة / استنادًا"}, {"english": "overlooking", "arabic": "يُطلّ ع"}, {"english": "swindle", "arabic": "يحتال"}, {"english": "suffering", "arabic": "يعا"}, {"english": "slander", "arabic": "قذف / تشه"}, {"english": "traced", "arabic": "تتبع"}, {"english": "nearly", "arabic": "تقريبًا / وشيك"}, {"english": "stretched", "arabic": "تمدّد"}, {"english": "closely", "arabic": "بعناية"}, {"english": "converted", "arabic": "حوّل"}, {"english": "early", "arabic": "مبكر"}, {"english": "marked", "arabic": "علّم"}, {"english": "fittingly", "arabic": "بشكل ملائم"}, {"english": "cooked with", "arabic": "مطبوخ مع"}, {"english": "conjugating", "arabic": "تصريف"}, {"english": "originated from", "arabic": "يتشكّل من"}, {"english": "operating", "arabic": "يعمل"}, {"english": "mixed with", "arabic": "مخلوط مع"}, {"english": "adorning", "arabic": "يزيّن"}, {"english": "extracted from", "arabic": "مُستخلص مِنْ"}, {"english": "animating", "arabic": "يُحرّك (رسومات متحركة"}, {"english": "further", "arabic": "بالإضافة إلى / إضا"}, {"english": "marginal", "arabic": "هامش"}, {"english": "amlost", "arabic": "تقريبًا / يكاد"}, {"english": "joint", "arabic": "مفصل"}, {"english": "trooped", "arabic": "جنّد"}, {"english": "calculated", "arabic": "محسوب"}, {"english": "composed", "arabic": "تتكوّن"}, {"english": "again", "arabic": "مرّة اخرى"}, {"english": "excuse", "arabic": "عذر"}, {"english": "seldom", "arabic": "نادر"}, {"english": "clue", "arabic": "فكرة"}, {"english": "salted", "arabic": "مُملّح"}, {"english": "controversy", "arabic": "جدل / مؤامرة"}, {"english": "encrypted", "arabic": "مُشفر"}, {"english": "proclaimed", "arabic": "أعلن"}, {"english": "trial", "arabic": "محاكمة / تجريبي"}, {"english": "stranded", "arabic": "تقطعت / محصور"}, {"english": "goal", "arabic": "هدف"}, {"english": "amended", "arabic": "مُعدّل"}, {"english": "list", "arabic": "قائمة"}, {"english": "recruited", "arabic": "جنّد"}, {"english": "trust", "arabic": "يثق"}, {"english": "escaped", "arabic": "هرب"}, {"english": "affront", "arabic": "إهانة"}, {"english": "eloped", "arabic": "هرب"}, {"english": "attire", "arabic": "لباس"}, {"english": "elevated", "arabic": "مرتفع / مصعّد"}, {"english": "alter", "arabic": "تبديل"}, {"english": "escalated", "arabic": "تصاعد / تسارع"}, {"english": "abroad", "arabic": "خارج البلاد"}, {"english": "stuttering", "arabic": "تأتأة / يتلعثم"}, {"english": "won", "arabic": "فاز"}, {"english": "shattering", "arabic": "يحطم"}, {"english": "met", "arabic": "التقى / يتم الحصول"}, {"english": "grasping", "arabic": "يحمل"}, {"english": "told", "arabic": "قال"}, {"english": "wecking", "arabic": "يحطم"}, {"english": "sent", "arabic": "يُرسل / مُرسَل"}, {"english": "distort", "arabic": "يشوّه"}, {"english": "proportion", "arabic": "نسبة"}, {"english": "decipher", "arabic": "يفكّ شيفرة"}, {"english": "instead of", "arabic": "بدلاً من"}, {"english": "dread", "arabic": "فزع / خوف"}, {"english": "due to", "arabic": "بسبب"}, {"english": "defused", "arabic": "نزع فتيل"}, {"english": "as quickly as", "arabic": "بسرعة معيّنة"}, {"english": "lull", "arabic": "هدوء مؤقت"}, {"english": "only as", "arabic": "فقط مثل"}, {"english": "idol", "arabic": "قدوة"}, {"english": "transformed", "arabic": "حوّل"}, {"english": "omen", "arabic": "فال / نذير نحس"}, {"english": "located", "arabic": "يقع"}, {"english": "aw", "arabic": "خطأ / عيب"}, {"english": "tomb", "arabic": "ق"}, {"english": "treasure", "arabic": "كنز"}, {"english": "passage", "arabic": "ممرّ"}, {"english": "horizon", "arabic": "أُفُق"}, {"english": "measurement", "arabic": "قياس"}, {"english": "lawnmower", "arabic": "أداة جزّ العشب"}, {"english": "sheild", "arabic": "درع"}, {"english": "ornament", "arabic": "زخرفة"}, {"english": "reckless", "arabic": "متهور"}, {"english": "exaggerate", "arabic": "يبالغ"}, {"english": "vehicle", "arabic": "مركبة"}, {"english": "occur", "arabic": "يحدث"}, {"english": "resistance", "arabic": "مقاومة"}, {"english": "tunnel", "arabic": "نفق"}, {"english": "distirbute", "arabic": "يُوزِّع"}, {"english": "undergo", "arabic": "يتعرّض لـ"}, {"english": "ensure", "arabic": "يضمن"}, {"english": "tolerate", "arabic": "يتحمّل"}, {"english": "cooperation", "arabic": "تعاون"}, {"english": "adhesives", "arabic": "مواد لاصقة"}, {"english": "modifactions", "arabic": "تعديلات"}, {"english": "subscriptions", "arabic": "اشتراكات"}, {"english": "ointment", "arabic": "مَراهِم"}, {"english": "tilted", "arabic": "يُحْنَى"}, {"english": "herded", "arabic": "يُجمَّع"}, {"english": "smuggled", "arabic": "يُهرَّب"}, {"english": "molded", "arabic": "يُشكَّل / يُصَبّ"}, {"english": "volcanic eruption", "arabic": "ثوران بركا"}, {"english": "interminable", "arabic": "لا نهاية له"}, {"english": "gradually", "arabic": "تدريجيًّا"}, {"english": "unfold", "arabic": "تنكشف"}, {"english": "principally", "arabic": "مبدئيًّا"}, {"english": "impressively", "arabic": "مُثير للاعجاب"}, {"english": "equally", "arabic": "بالتّساوٍ"}, {"english": "opressive", "arabic": "ظالمة / جائرة"}, {"english": "tavern", "arabic": "حانة"}, {"english": "suspended", "arabic": "مطرود"}, {"english": "legislated", "arabic": "مُشرَّع"}, {"english": "rehearsed", "arabic": "مُدرَّب"}, {"english": "frequented", "arabic": "مُرتاد بكثرة"}, {"english": "desalnation", "arabic": "تحلية"}, {"english": "combustion", "arabic": "احتراق"}, {"english": "complacency", "arabic": "رضا"}, {"english": "tyrannical", "arabic": "طاغية"}, {"english": "overshadowed", "arabic": "طُغِيَ عليه"}, {"english": "renowned", "arabic": "مشهور"}, {"english": "eminent", "arabic": "بارز"}, {"english": "exaperated", "arabic": "أغضبَ"}, {"english": "guranteed", "arabic": "مضمون"}, {"english": "restricted", "arabic": "مُقيّد"}, {"english": "combined", "arabic": "مدموج"}, {"english": "applied", "arabic": "مُطبّق"}, {"english": "caring", "arabic": "يهتم"}, {"english": "blowing", "arabic": "يعصُف"}, {"english": "failing", "arabic": "يفشَل"}, {"english": "aching", "arabic": "يؤ"}, {"english": "evacutaed", "arabic": "أجليّ"}, {"english": "penalized", "arabic": "عوقِب"}, {"english": "designated", "arabic": "حُدِدَ"}, {"english": "antagonized", "arabic": "عودِيَ"}, {"english": "further", "arabic": "إضافيّ"}, {"english": "almost", "arabic": "تقريبًا"}, {"english": "again", "arabic": "مرّة أخرى"}, {"english": "spacecraft", "arabic": "مكّوك"}, {"english": "advice", "arabic": "نصيحة"}, {"english": "staff", "arabic": "طاقم"}, {"english": "data", "arabic": "معطيات"}, {"english": "equipment", "arabic": "معدّات"}, {"english": "trait", "arabic": "صفة"}, {"english": "mist", "arabic": "ضباب"}, {"english": "probe", "arabic": "مسبار"}, {"english": "seal", "arabic": "ختم"}, {"english": "carve", "arabic": "ينحت"}, {"english": "intersected", "arabic": "تقاطعَ"}, {"english": "portrayed", "arabic": "صوَّرَ"}, {"english": "embodied", "arabic": "جسَّدّ"}, {"english": "commissioned", "arabic": "كَلَّفَ"}, {"english": "won", "arabic": "يتم كسبها"}, {"english": "met", "arabic": "توفَّر"}, {"english": "told", "arabic": "تُقال"}, {"english": "sent", "arabic": "تُرسَل"}, {"english": "cuisine", "arabic": "الأطباق/ المأكولات"}, {"english": "cost prohibitive", "arabic": "غاليّة الثمن"}, {"english": "prototype", "arabic": "نموذج مبد"}, {"english": "untamed", "arabic": "غير ممسوس"}, {"english": "adverely", "arabic": "سلبًا"}, {"english": "exacerbating", "arabic": "يُفاقِم"}, {"english": "respiratory", "arabic": "له علاقة بالتنفس"}, {"english": "disorder", "arabic": "اضطراب"}, {"english": "wilderness", "arabic": "البرية"}, {"english": "inhospitable", "arabic": "غير مضياف"}, {"english": "pertaining", "arabic": "متعلّق"}, {"english": "prohibitive", "arabic": "تحريمي/محرم"}, {"english": "substitue", "arabic": "يُبَدّل"}, {"english": "unverifiable", "arabic": "لا يمكن التحقُق منها"}, {"english": "capacity", "arabic": "سعة"}, {"english": "orbit", "arabic": "مدار"}, {"english": "advised", "arabic": "نَصحَ"}, {"english": "rescued", "arabic": "أنقذَ"}, {"english": "borrowed", "arabic": "استعار"}, {"english": "pardoned", "arabic": "عفا"}, {"english": "glue", "arabic": "صمغ"}, {"english": "drill", "arabic": "تدريب"}, {"english": "raise", "arabic": "يرفع/يجمع"}, {"english": "slide", "arabic": "ينزلق"}, {"english": "compositions", "arabic": "مؤلّفات"}, {"english": "distributions", "arabic": "توزيعات"}, {"english": "reservations", "arabic": "حجوزات"}, {"english": "locations", "arabic": "مواقع"}, {"english": "interrupted", "arabic": "قوطِعَ"}, {"english": "erupted", "arabic": "ثارَ/تفجر"}, {"english": "disrupted", "arabic": "عطَّل"}, {"english": "corrupted", "arabic": "أفسد"}, {"english": "bachelors", "arabic": "عزابية (جمع أعزب"}, {"english": "slums", "arabic": "الأحياء الفقيرة"}, {"english": "dilemmas", "arabic": "معضلات"}, {"english": "aliens", "arabic": "كائنات فضائية"}, {"english": "poverty-stricken", "arabic": "فقيرة"}, {"english": "arrows", "arabic": "أسهم"}, {"english": "branch", "arabic": "فرع"}, {"english": "talons", "arabic": "مخالب"}, {"english": "flattering", "arabic": "يُغري/يُجامل"}, {"english": "maturing", "arabic": "يبلُغ"}, {"english": "grasping", "arabic": "يقبض ع"}, {"english": "wrecking", "arabic": "يُدمّر"}, {"english": "genre", "arabic": "نوع"}, {"english": "generates", "arabic": "يولّد"}, {"english": "revenues", "arabic": "أرباح"}, {"english": "tentative", "arabic": "مؤقّت"}, {"english": "fragmentary", "arabic": "مُجزّأ"}, {"english": "sedentary", "arabic": "كسول"}, {"english": "lucrative", "arabic": "مُربح"}, {"english": "intricate", "arabic": "معقد/صعب حله"}, {"english": "pattern", "arabic": "نمط"}, {"english": "recipients", "arabic": "مُستقبلون"}, {"english": "minimalists", "arabic": "متقشّفون"}, {"english": "navigators", "arabic": "موجّهون"}, {"english": "weavers", "arabic": "حاكة (جمع حائك"}, {"english": "conqueror", "arabic": "الغازي/المحتلّ"}, {"english": "succeeded", "arabic": "خَلَفَ"}, {"english": "comsumed", "arabic": "المُستهلك"}, {"english": "comsists", "arabic": "يتكوَّن من"}, {"english": "catalysts", "arabic": "مُحفّزات"}, {"english": "vernacular", "arabic": "عاميّة"}, {"english": "agnosticism", "arabic": "اللا أدريّة"}, {"english": "doctrine", "arabic": "عقيدة"}, {"english": "subjective", "arabic": "غير موضوعي"}];
+let tablePairs = [...WORD_PAIRS];
+let direction = 'both';
+let deck = [];
+let currentIndex = 0;
+let score = 0;
+let answered = 0;
+let locked = false;
+
+const totalPairsEl = document.getElementById('totalPairs');
+const totalCardsEl = document.getElementById('totalCards');
+const scoreStatEl = document.getElementById('scoreStat');
+const accuracyStatEl = document.getElementById('accuracyStat');
+const wordTable = document.getElementById('wordTable');
+const searchInput = document.getElementById('searchInput');
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function updateStats() {
+  totalPairsEl.textContent = WORD_PAIRS.length;
+  totalCardsEl.textContent = WORD_PAIRS.length * 2;
+  scoreStatEl.textContent = score;
+  accuracyStatEl.textContent = answered ? Math.round((score / answered) * 100) + '%' : '0%';
+}
+
+function renderTable(filter='') {
+  const q = filter.trim().toLowerCase();
+  const rows = tablePairs.filter(p => !q || p.english.toLowerCase().includes(q) || p.arabic.toLowerCase().includes(q));
+  wordTable.innerHTML = rows.map((p, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td dir="ltr">${escapeHtml(p.english)}</td>
+      <td>${escapeHtml(p.arabic)}</td>
+    </tr>`).join('');
+}
+
+function buildDeck() {
+  let cards = [];
+  if (direction === 'en-ar' || direction === 'both') {
+    cards.push(...WORD_PAIRS.map(p => ({ ask: p.english, answer: p.arabic, direction: 'English → Arabic' })));
+  }
+  if (direction === 'ar-en' || direction === 'both') {
+    cards.push(...WORD_PAIRS.map(p => ({ ask: p.arabic, answer: p.english, direction: 'Arabic → English' })));
+  }
+
+  cards = shuffle(cards);
+  const wanted = parseInt(document.getElementById('questionCount').value, 10);
+  if (wanted < cards.length) cards = cards.slice(0, wanted);
+  return cards;
+}
+
+function getDistractors(card, count) {
+  const pool = deck
+    .filter(c => c.direction === card.direction && c.answer !== card.answer)
+    .map(c => c.answer);
+  const unique = [...new Set(pool)];
+  return shuffle(unique).slice(0, count);
+}
+
+function startQuiz() {
+  direction = document.querySelector('.chip.active').dataset.direction;
+  deck = buildDeck();
+  currentIndex = 0;
+  score = 0;
+  answered = 0;
+  locked = false;
+  updateStats();
+  document.getElementById('quizAreaStart').classList.add('hidden');
+  document.getElementById('resultsArea').classList.add('hidden');
+  document.getElementById('quizArea').classList.remove('hidden');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  locked = false;
+  const card = deck[currentIndex];
+  const optionCount = parseInt(document.getElementById('optionCount').value, 10);
+  const options = shuffle([card.answer, ...getDistractors(card, optionCount - 1)]);
+
+  document.getElementById('statusBadge').textContent = `سؤال ${currentIndex + 1} / ${deck.length}`;
+  document.getElementById('modeBadge').textContent = card.direction;
+  document.getElementById('promptLabel').textContent = card.direction === 'English → Arabic' ? 'اختاري الترجمة العربية الصحيحة' : 'Choose the correct English translation';
+  document.getElementById('questionWord').textContent = card.ask;
+  document.getElementById('progressBar').style.width = `${(currentIndex / deck.length) * 100}%`;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('nextBtn').disabled = true;
+
+  const box = document.getElementById('optionsBox');
+  box.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.textContent = opt;
+    btn.dir = /[؀-ۿ]/.test(opt) && !/[A-Za-z]/.test(opt) ? 'rtl' : 'ltr';
+    btn.onclick = () => chooseOption(btn, opt, card.answer);
+    box.appendChild(btn);
+  });
+}
+
+function chooseOption(btn, chosen, correct) {
+  if (locked) return;
+  locked = true;
+  answered += 1;
+  const options = [...document.querySelectorAll('.option')];
+  options.forEach(b => b.disabled = true);
+  const feedback = document.getElementById('feedback');
+
+  if (chosen === correct) {
+    score += 1;
+    btn.classList.add('correct');
+    feedback.textContent = 'إجابة صحيحة!';
+    feedback.classList.add('ok');
+  } else {
+    btn.classList.add('wrong');
+    const correctBtn = options.find(b => b.textContent === correct);
+    if (correctBtn) correctBtn.classList.add('correct');
+    feedback.textContent = `الإجابة الصحيحة: ${correct}`;
+    feedback.classList.add('bad');
+  }
+
+  updateStats();
+  document.getElementById('nextBtn').disabled = false;
+  document.getElementById('progressBar').style.width = `${((currentIndex + 1) / deck.length) * 100}%`;
+}
+
+function nextQuestion() {
+  currentIndex += 1;
+  if (currentIndex >= deck.length) return showResults();
+  renderQuestion();
+}
+
+function showResults() {
+  document.getElementById('quizArea').classList.add('hidden');
+  document.getElementById('resultsArea').classList.remove('hidden');
+  const pct = answered ? Math.round((score / answered) * 100) : 0;
+  document.getElementById('finalScoreText').textContent = `نتيجتك: ${score} من ${answered} — الدقة ${pct}%`;
+}
+
+// events
+updateStats();
+renderTable();
+searchInput.addEventListener('input', e => renderTable(e.target.value));
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+  });
+});
+
+document.getElementById('startBtn').addEventListener('click', startQuiz);
+document.getElementById('playAgainBtn').addEventListener('click', startQuiz);
+document.getElementById('restartBtn').addEventListener('click', startQuiz);
+document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+document.getElementById('shuffleBtn').addEventListener('click', () => {
+  tablePairs = shuffle(tablePairs);
+  renderTable(searchInput.value);
+});
+</script>
+</body>
+</html>
